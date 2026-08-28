@@ -1,7 +1,5 @@
 module Main (main) where
 
-import Text.Read (readMaybe)
-
 data Sign = X | O | E
     deriving (Eq)
 
@@ -50,9 +48,15 @@ updateGameState [a, b, c, d, e, f, g, h, i]
         , [c, e, g]
         ]
 
+-- Source - https://stackoverflow.com/a/43693157
+-- Posted by Zeta
+-- Retrieved 2026-08-28, License - CC BY-SA 3.0
+digitToInt :: Char -> Maybe Int
+digitToInt c = lookup c (zip ['0' .. '9'] [0 .. 9])
+
 parseStringToIndex :: String -> Int
 parseStringToIndex (row : ' ' : col : _) =
-    case (readMaybe row, readMaybe col) of
+    case (digitToInt row, digitToInt col) of
         (Just ri, Just ci)
             | ri `elem` [1, 2, 3]
                 && ci `elem` [1, 2, 3] ->
@@ -97,12 +101,12 @@ playGame board sign = do
             index <- readMoveIndex
             if board !! index == E
                 then do
-                    putStrLn "That cell is taken!!"
-                    playGame board sign
-                else do
                     let newBoard = applyMove board index sign
                         newSign = swapSign sign
                     playGame newBoard newSign
+                else do
+                    putStrLn "That cell is taken!!"
+                    playGame board sign
 
 main :: IO ()
 main = do
