@@ -16,9 +16,7 @@ swapSign O = X
 swapSign _ = E
 
 type Board = [Sign]
-
-data GameState = Playing | Tie | Winner Sign | Start
-data Game = Game {gameBoard :: Board, gameState :: GameState}
+data GameStatus = Tie | Winner Sign | GameInProgress
 
 makeBoard :: Board
 makeBoard = replicate 9 E
@@ -34,12 +32,12 @@ renderBoard [a, b, c, d, e, f, g, h, i] =
         , " 3 " ++ show g ++ "|" ++ show h ++ "|" ++ show i
         ]
 
-updateGameState :: Board -> GameState
+updateGameState :: Board -> GameStatus
 updateGameState [a, b, c, d, e, f, g, h, i]
     | any (all (== X)) winnableRows = Winner X
     | any (all (== O)) winnableRows = Winner O
     | E `notElem` [a, b, c, d, e, f, g, h, i] = Tie
-    | otherwise = Playing
+    | otherwise = GameInProgress
   where
     winnableRows =
         [ [a, b, c]
@@ -52,24 +50,27 @@ updateGameState [a, b, c, d, e, f, g, h, i]
         , [c, e, g]
         ]
 
-readMoveToPos :: IO Int
-readMoveToPos = do
-    putStrLn "Enter the column you'd like to put your sign on: [1, 2, or 3]"
-    col <- getLine
-    putStrLn "Enter the row you'd like to put your sign on: [1, 2, or 3]"
-    row <- getLine
+parseStringToIndex :: String -> Int
+parseStringToIndex (row : ' ' : col : _) =
+    case (readMaybe row, readMaybe col) of
+        (Just ri, Just ci)
+            | ri `elem` [1, 2, 3]
+                && ci `elem` [1, 2, 3] ->
+                (ri - 1) * 3 + (ci - 1)
+        _ -> -1
+parseStringToIndex _ = -1
 
-    case (readMaybe col, readMaybe row) of
-        (Just colI, Just rowI)
-            | colI `elem` [1, 2, 3]
-                && rowI `elem` [1, 2, 3] ->
-                pure ((rowI - 1) * 3 + (colI - 1))
-        _ -> do
+readMoveIndex :: IO Int
+readMoveIndex = do
+    putStrLn "Enter the row & column (1-3) like \"# #\" that you'd like to put your sign on:"
+    rowCol <- getLine
+    let parsedIndex = parseStringToIndex rowCol
+    if parsedIndex < 0
+        then do
             putStrLn "Invalid Input"
-            readMoveToPos
-
-moveIsValid :: Int -> Board -> Bool
-moveIsValid index board = board !! index == E
+            readMoveIndex
+        else
+            pure parsedIndex
 
 applyMove :: Board -> Int -> Sign -> Board
 applyMove board index sign =
@@ -82,31 +83,25 @@ gameIntro =
         , "Win by getting three of your sign [X/O] in a row"
         , "Rows can be vertical, horizontal or diagonal"
         , "The game can only end in victory or a tie"
-        , ""
-        , "To make a play enter the coordinates of the cell"
-        , "you'd like to occupy"
         ]
 
 playGame :: Board -> Sign -> IO ()
 playGame board sign = do
     putStrLn (renderBoard board)
-
     case updateGameState board of
         Winner X -> putStrLn "X is the WINNER!!!"
         Winner O -> putStrLn "O is the WINNER!!!"
         Tie -> putStrLn "No winners (Tie)"
         _ -> do
             putStrLn (show sign ++ "'s turn:")
-            pos <- readMoveToPos
-
-            if not (moveIsValid pos board)
+            index <- readMoveIndex
+            if board !! index == E
                 then do
                     putStrLn "That cell is taken!!"
                     playGame board sign
                 else do
-                    let newBoard = applyMove board pos sign
+                    let newBoard = applyMove board index sign
                         newSign = swapSign sign
-
                     playGame newBoard newSign
 
 main :: IO ()
