@@ -1,11 +1,14 @@
-# tictactoe
+# Tic Tac Toe
 
-Project to help me continue learning the ropes of Haskell.
+## Project Overview
 
-## Build
+This is a basic tic tac toe implementation using the Haskell Programming
+Language.
 
 Run `$ cabal build` to build the project
 
-## Documentation
+## Reflection
 
-Run `$ cabal haddock --open` to generate a reference for the API of the project.
+This was a bit more complicated than any other functional programming project
+I had done up to this point. I learned a lot more about pattern matching,
+algebraic data types, guard statements, and types.

@@ -1,12 +1,25 @@
 module Main (main) where
 
+
+-- Algebraic data type for state of the sign
+-- signs of boxes in tic-tac-toe can either be:
+--  - Empty (no player has chosen to mark that box)
+--  - X, the player with the X sign has chosen to
+--    mark that box.
+--  - O, the player with the O sign has chosen to
+--    mark that box.
+--
+-- Derives eq for checking on win condition
 data Sign = X | O | E
     deriving (Eq)
 
+-- Definging show for the sign data to output it
+-- in string form.
 instance Show Sign where
     show X = " X "
     show O = " O "
     show E = "   "
+
 
 swapSign :: Sign -> Sign
 swapSign X = O
@@ -14,6 +27,8 @@ swapSign O = X
 swapSign _ = E
 
 type Board = [Sign]
+
+-- Algebraic data type for the state of the game
 data GameStatus = Tie | Winner Sign | GameInProgress
 
 makeBoard :: Board
@@ -54,6 +69,9 @@ updateGameState [a, b, c, d, e, f, g, h, i]
 digitToInt :: Char -> Maybe Int
 digitToInt c = lookup c (zip ['0' .. '9'] [0 .. 9])
 
+-- converting user input into integers & making
+-- sure they are within the range [1, 2, 3]
+-- if not return -1.
 parseStringToIndex :: String -> Int
 parseStringToIndex (row : ' ' : col : _) =
     case (digitToInt row, digitToInt col) of
@@ -64,6 +82,8 @@ parseStringToIndex (row : ' ' : col : _) =
         _ -> -1
 parseStringToIndex _ = -1
 
+-- get input from a player, validate it, repeat if given bad data,
+-- else return the good data.
 readMoveIndex :: IO Int
 readMoveIndex = do
     putStrLn "Enter the row & column (1-3) like \"# #\" that you'd like to put your sign on:"
@@ -76,6 +96,7 @@ readMoveIndex = do
         else
             pure parsedIndex
 
+-- updating the board based on passed data
 applyMove :: Board -> Int -> Sign -> Board
 applyMove board index sign =
     take index board ++ [sign] ++ drop (index + 1) board
